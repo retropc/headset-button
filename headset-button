@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+
+import struct
+import os
+import sys
+import subprocess
+
+EV_KEY = 1
+KEY_VOLUMEDOWN = 114
+KEY_VOLUMEUP = 115
+
+KEY_RELEASE = 0
+KEY_PRESS = 1
+
+def main(path, exec_path):
+  def on_key(vol_down, pressed):
+    key = "down" if vol_down else "up"
+    state = "press" if pressed else "release"
+    print(key, state)
+    subprocess.call([exec_path, key, state], shell=False, stdin=subprocess.DEVNULL)
+
+  input_struct = struct.Struct("llHHi")
+
+  fd = os.open(sys.argv[1], os.O_RDONLY|os.O_CLOEXEC)
+  try:
+    while True:
+      event = os.read(fd, input_struct.size)
+      if len(event) != input_struct.size:
+        break
+
+      _, _, type_, code, value = input_struct.unpack_from(event)
+      if type_ == EV_KEY and code in (KEY_VOLUMEDOWN, KEY_VOLUMEUP) and value in (KEY_PRESS, KEY_RELEASE):
+        on_key(code == KEY_VOLUMEDOWN, value == KEY_PRESS)
+  finally:
+    os.close(fd)
+
+if __name__ == "__main__":
+  main(sys.argv[1], sys.argv[2])

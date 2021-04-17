@@ -1,0 +1,1 @@
+SUBSYSTEM=="input", ATTRS{idVendor}=="abcd", ATTRS{idProduct}=="defg", MODE="0660", GROUP="youruid"
